@@ -1,0 +1,25 @@
+{% extends "pic_app/base.html" %}
+
+
+{% block content %}
+
+    <h2>Список изображений</h2>
+
+    {% if not pictures_list %}
+    <p>Нет доступных изображений.</p>
+    {% else %}
+    <ul>
+        {% for pic in pictures_list %}
+
+            <a href="{% url 'pic_app:edit_picture' pic.id %}">
+                <img src="{{ pic.picture.url }}" style="max-width: 100%;"
+                 title="Нажмите на картинку чтобы измеить размер">
+            </a>
+
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <a href="{% url 'pic_app:upload' %}">Добавить изображение</a>
+
+{% endblock content %}

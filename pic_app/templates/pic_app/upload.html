@@ -1,0 +1,12 @@
+{% extends "pic_app/base.html" %}
+
+
+{% block content %}
+<h2>Загрузка изображения</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Отправить</button>
+</form>
+
+{% endblock content %}

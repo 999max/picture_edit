@@ -1,0 +1,19 @@
+{% extends "pic_app/base.html" %}
+
+{% block content %}
+<h3>Изменение размера</h3>
+
+<form method="post" action="{% url 'pic_app:edit_picture' picture.id %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Изменить</button>
+</form>
+<br>
+
+{% if not output_picture_url %}
+    <img src="{{ picture.picture.url }}">
+{% else %}
+    <p>Оригианальный размер изображения: {{ old_size }}</p>
+    <img src="{{ output_picture_url }}">
+{% endif %}
+{% endblock content %}
