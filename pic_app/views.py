@@ -1,16 +1,19 @@
 import requests
 from django.conf import settings
+from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views import generic
+from requests import RequestException
+
 from .forms import PictureForm, SizeForm
 from .models import Picture
 
 from urllib.parse import urlparse
 from urllib3.packages.six import BytesIO
-from PIL import Image
-
+from PIL import Image, UnidentifiedImageError
+import sanitize_filename
 
 class IndexView(generic.ListView):
     template_name = 'pic_app/index.html'
@@ -33,9 +36,17 @@ class UploadView(generic.CreateView):
     def form_valid(self, form):
         if form.cleaned_data.get('url_picture'):
             pic_url = form.data['url_picture']
-            response = requests.get(pic_url, stream=True).raw
-            img = Image.open(response)
-            output_name = 'downloaded_0_' + urlparse(pic_url).path.split('/')[-1]
+            try:
+                response = requests.get(pic_url, stream=True)
+                response.raise_for_status()
+            except RequestException:
+                return redirect("pic_app:upload")
+            try:
+                img = Image.open(response.raw)
+            except UnidentifiedImageError:
+                return redirect("pic_app:upload")
+
+            output_name = f"downloaded_0_{urlparse(pic_url).path.split('/')[-1]}"
             self.object = Picture()
             img_io = BytesIO()
             img.save(img_io, img.format)
@@ -58,9 +69,8 @@ def edit_picture(request, pk):
     else:
         form = SizeForm(data=request.POST)
         input_picture = Image.open(picture.picture)
-        print(input_picture)
-        w, h = input_picture.size
-        old_size = (w, h)
+        _width, _height = input_picture.size
+        old_size = (_width, _height)
         if form.is_valid():
             size = form.cleaned_data
             width = size['width']
@@ -69,11 +79,11 @@ def edit_picture(request, pk):
             if width and height:
                 new_size = (width, height)
             elif width:
-                new_size = (width, h)
+                new_size = (width, _height)
             elif height:
-                new_size = (w, height)
+                new_size = (_width, height)
             else:
-                new_size = (w, h)
+                new_size = (_width, _height)
 
             input_picture.thumbnail(new_size, Image.ANTIALIAS)
             output_name = '/edited_' + picture.picture.name
